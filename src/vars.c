@@ -110,7 +110,7 @@ struct dmon_conf dmon;
  * one of the threads is not running, the corresponding variable is assigned
  * the identifier of the main thread instead.
  */
-pthread_t notify_t_main, io_t_psave, ui_calendar_t_date;
+pthread_t notify_t_main, io_t_psave, ui_calendar_t_date, autoreload_t;
 
 /*
  * Variables init
@@ -141,6 +141,8 @@ void vars_init(void)
 	conf.heading_pos = RIGHT;
 	strcpy(conf.day_heading, DAY_HEADING_DEFAULT);
 	strcpy(conf.timefmt, APPT_TIME_DEFAULT);
+	conf.autoreload = 0;
+	conf.autoreload_interval = 5;
 
 	datefmt_str[0] = _("mm/dd/yyyy");
 	datefmt_str[1] = _("dd/mm/yyyy");
@@ -186,5 +188,5 @@ void vars_init(void)
 	ui_calendar_init_slctd_day();
 
 	/* Threads not yet running. */
-	notify_t_main = io_t_psave = ui_calendar_t_date = pthread_self();
+	notify_t_main = io_t_psave = ui_calendar_t_date = autoreload_t = pthread_self();
 }

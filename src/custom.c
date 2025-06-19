@@ -538,6 +538,8 @@ enum {
 	AUTO_SAVE,
 	AUTO_GC,
 	PERIODIC_SAVE,
+	AUTORELOAD,
+	AUTORELOAD_INTERVAL,
 	SYSTEM_EVENTS,
 	CONFIRM_QUIT,
 	CONFIRM_DELETE,
@@ -568,6 +570,8 @@ static void print_general_option(int i, WINDOW *win, int y, int hilt, void *cb_d
 		"general.autosave = ",
 		"general.autogc = ",
 		"general.periodicsave = ",
+		"general.autoreload = ",
+		"general.autoreloadinterval = ",
 		"general.systemevents = ",
 		"general.confirmquit = ",
 		"general.confirmdelete = ",
@@ -680,6 +684,16 @@ static void print_general_option(int i, WINDOW *win, int y, int hilt, void *cb_d
 			  _("(if not null, automatically save data every "
 			  "'periodic_save' minutes)"));
 		break;
+	case AUTORELOAD:
+		print_bool_option_incolor(win, conf.autoreload, y, XPOS + strlen(opt[AUTORELOAD]));
+		mvwaddstr(win, y + 1, XPOS, _("(if set to YES, calcurse will automatically reload data at a set interval)"));
+		break;
+	case AUTORELOAD_INTERVAL:
+		custom_apply_attr(win, ATTR_HIGHEST);
+		mvwprintw(win, y, XPOS + strlen(opt[AUTORELOAD_INTERVAL]), "%d", conf.autoreload_interval);
+		custom_remove_attr(win, ATTR_HIGHEST);
+		mvwaddstr(win, y + 1, XPOS, _("(interval in minutes between automatic reloads; 0 disables autoreload)"));
+		break;
 	case SYSTEM_EVENTS:
 		print_bool_option_incolor(win, conf.systemevents, y,
 					  XPOS + strlen(opt[SYSTEM_EVENTS]));
@@ -786,6 +800,7 @@ static void general_option_edit(int i)
 	const char *input_datefmt_prefix = _("Enter the date format: ");
 	const char *periodic_save_str =
 	    _("Enter the delay, in minutes, between automatic saves (0 to disable) ");
+	const char *autoreload_interval_str = _( "Enter the delay, in minutes, between automatic reloads (0 to disable) " );
 	int val;
 	char *buf;
 
@@ -864,6 +879,23 @@ static void general_option_edit(int i)
 				io_stop_psave_thread();
 				if (conf.periodic_save > 0)
 					io_start_psave_thread();
+			}
+		}
+		break;
+	case AUTORELOAD:
+		conf.autoreload = !conf.autoreload;
+		stop_autoreload_thread();
+		start_autoreload_thread();
+		break;
+	case AUTORELOAD_INTERVAL:
+		status_mesg(autoreload_interval_str, "");
+		snprintf(buf, BUFSIZ, "%d", conf.autoreload_interval);
+		if (updatestring(win[STA].p, &buf, 0, 1) == 0) {
+			val = atoi(buf);
+			if (val >= 0) {
+				conf.autoreload_interval = val;
+				stop_autoreload_thread();
+				start_autoreload_thread();
 			}
 		}
 		break;
@@ -960,7 +992,8 @@ void custom_general_config(void)
 			listbox_resize(&lb, 0, 0, notify_bar() ? row - 3 : row - 2, col);
 			listbox_draw_deco(&lb, 0);
 			delwin(win[STA].p);
-			win[STA].p = newwin(win[STA].h, win[STA].w, win[STA].y, win[STA].x);
+			win[STA].p = newwin(win[STA].h, win[STA].w, win[STA].y,
+					win[STA].x);
 			keypad(win[STA].p, TRUE);
 			if (notify_bar()) {
 				notify_reinit_bar();

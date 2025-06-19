@@ -1210,3 +1210,9 @@ Version 1.0 (2005-10-08)
 
     * Default options "auto-save", "confirm-quit", and "confirm-delete" were
       set to 'yes'
+
+Version NEXT (unreleased)
+------------------------
+
+- New features:
+    * Autoreload: calcurse can now automatically reload calendar data at a user-defined interval. This is configurable in the General Options menu with `general.autoreload` (enable/disable) and `general.autoreloadinterval` (interval in minutes). When enabled, calcurse will reload its data in the background, reflecting any external changes to the calendar files automatically.

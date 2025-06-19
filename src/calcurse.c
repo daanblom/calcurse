@@ -35,12 +35,16 @@
  */
 
 #include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
 
 #include "calcurse.h"
 
 #define HANDLE_KEY(key, fn) case key: fn(); break;
 
 int count, reg;
+
+pthread_mutex_t autoreload_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static inline void key_generic_change_view(void)
 {
@@ -687,6 +691,48 @@ cleanup:
 	wins_update(FLAG_ALL);
 }
 
+static void *autoreload_thread(void *arg)
+{
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	for (;;) {
+		unsigned interval;
+		pthread_mutex_lock(&autoreload_mutex);
+		interval = conf.autoreload_interval;
+		pthread_mutex_unlock(&autoreload_mutex);
+		if (!conf.autoreload || interval == 0) {
+			sleep(60); // check every minute if enabled
+			continue;
+		}
+		sleep(interval * 60);
+		if (conf.autoreload && conf.autoreload_interval > 0) {
+			key_generic_reload();
+		}
+	}
+	return NULL;
+}
+
+void start_autoreload_thread(void)
+{
+	if (conf.autoreload && conf.autoreload_interval > 0) {
+		pthread_mutex_lock(&autoreload_mutex);
+		if (pthread_equal(autoreload_t, pthread_self())) {
+			pthread_create(&autoreload_t, NULL, autoreload_thread, NULL);
+		}
+		pthread_mutex_unlock(&autoreload_mutex);
+	}
+}
+
+void stop_autoreload_thread(void)
+{
+	pthread_mutex_lock(&autoreload_mutex);
+	if (!pthread_equal(autoreload_t, pthread_self())) {
+		pthread_cancel(autoreload_t);
+		pthread_join(autoreload_t, NULL);
+		autoreload_t = pthread_self();
+	}
+	pthread_mutex_unlock(&autoreload_mutex);
+}
+
 /*
  * Calcurse is a text-based personal organizer which helps keeping track
  * of events and everyday tasks. It contains a calendar, a 'todo' list,
@@ -792,6 +838,8 @@ int main(int argc, char **argv)
 	ui_calendar_start_date_thread();
 	if (conf.periodic_save > 0)
 		io_start_psave_thread();
+
+	start_autoreload_thread();
 
 	/* User input */
 	for (;;) {

@@ -65,3 +65,15 @@ We are also extremely grateful for donations which help us continue developing
 calcurse as open source software and are used to cover recurring costs, such as
 for our servers. You can use https://calcurse.org/donate/ for a one-time
 payment. If you prefer another form of donation, do not hesitate to contact us!
+
+## Autoreload Feature
+
+calcurse now supports automatic reloading of calendar data at a user-defined interval. This is useful if you edit your calendar files externally or synchronize them with other tools.
+
+### How to use:
+- Open the configuration menu (press `C` in the main UI, then `G` for General Options).
+- Set `general.autoreload` to YES to enable automatic reloading.
+- Set `general.autoreloadinterval` to the number of minutes between reloads (e.g., 1 for every minute).
+- calcurse will automatically reload its data at the specified interval, as if you pressed `R` manually.
+
+This feature is especially useful for users who edit their calendar files outside of calcurse or use synchronization scripts.

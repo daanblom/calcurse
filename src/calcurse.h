@@ -304,6 +304,8 @@ struct conf {
 	enum pos heading_pos; /* left/center/right for heading in appts panel */
 	char day_heading[BUFSIZ];	/* format for displaying heading in appts panel */
 	char timefmt[BUFSIZ];	/* format for displaying time in appts panel*/
+	unsigned autoreload; // enable/disable autoreload
+	unsigned autoreload_interval; // interval in minutes
 };
 
 #define EMPTY_DAY_DEFAULT "--"
@@ -1306,7 +1308,7 @@ extern struct pad apad;
 extern struct nbar nbar;
 extern struct dmon_conf dmon;
 void vars_init(void);
-extern pthread_t notify_t_main, io_t_psave, ui_calendar_t_date;
+extern pthread_t notify_t_main, io_t_psave, ui_calendar_t_date, autoreload_t;
 
 /* wins.c */
 extern struct window win[NBWINS];
@@ -1370,4 +1372,8 @@ struct event *que_ins(char *, time_t, int);
 void que_rem(void);
 void que_show(void);
 void que_save(void);
+
+void start_autoreload_thread(void);
+void stop_autoreload_thread(void);
+
 #endif /* CALCURSE_H */
